@@ -76,19 +76,57 @@ def check_vm_ip(ssh_client, vm):
     return True
 
 def create_vm(ssh_client, vm):
-    qt_create_command = "qt create...."
+    qt_create_command = f"""
+    mkdir -p /var/lib/vz2/images/{vm['vm_id']}
+    qemu-img create - qcow2 /var/lib/vz2/images/{vm['vm_id']}/{vm['vm_id']}.qcow2 {vm['storage']}
+    qm create {vm['vm_id']} \
+      --name {vm['name']} \
+      --onboot 1 \
+      --net0 e1000,bridge=vmbr0,firewall=1 \
+      --cdrom vm-store:iso/metal-amd64.iso,media=cdrom \
+      --sata0 vm-store:/var/lib/vz2/images/{vm['vm_id']}/{vm['vm_id']}.qcow2 \
+      --ostype l26 \
+      --onboot yes \
+      --start true \
+      --memory {vm['memory']} \
+      --socket {vm['cpu']} \
+      --cores {vm['core']} &&
+    while true; do \
+     VM_STATUS=\$(pvesh get /nodes/$VM_NODE/qemu/{vm['vm_id']}/status/current); \
+       if [ "\$VM_STATUS" = "running" ]; then \
+         break; \
+         else \
+           sleep 10; \
+         fi; \
+     done
+    """
+
     stdin, stdout, stderr = ssh_client.exec_command(qt_create_command)
     output = stdout.read().decode().strip()
     return output
 
 def delete_vm(ssh_client, vm):
-    qt_create_command = "qt create...."
+    qt_create_command = f"""
+        qt stop {vm['vm_id']}
+        qm status {vm['vm_id']}
+        qt destroy {vm['vm_id']} --destroy-unreferenced-disks true --purge true
+        """
     stdin, stdout, stderr = ssh_client.exec_command(qt_create_command)
     output = stdout.read().decode().strip()
     return output
 
 def recreate_vm(ssh_client, vm):
-    vm_command = "..."
+    vm_command = "..."pvesh create /nodes/$VM_NODE/qemu -vmid $VM_ID -name 'MyVMName' -ostype l26 -sockets 2 -cores 2 -memory 2048 -start 1 && \
+   while true; do \
+     VM_STATUS=\$(pvesh get /nodes/$VM_NODE/qemu/$VM_ID/status/current); \
+     if [ \"\$VM_STATUS\" = \"running\" ]; then \
+       echo 'A virtuális gép fut.'; \
+       break; \
+     else \
+       echo 'A virtuális gép még nem fut. Várakozás...'; \
+       sleep 10; \
+     fi; \
+   done""
     stdin, stdout, stderr = ssh_client.exec_command(vm_command)
     output = stdout.read().decode().strip()
     return output
