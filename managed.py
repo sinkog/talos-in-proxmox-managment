@@ -116,17 +116,7 @@ def delete_vm(ssh_client, vm):
     return output
 
 def recreate_vm(ssh_client, vm):
-    vm_command = "..."pvesh create /nodes/$VM_NODE/qemu -vmid $VM_ID -name 'MyVMName' -ostype l26 -sockets 2 -cores 2 -memory 2048 -start 1 && \
-   while true; do \
-     VM_STATUS=\$(pvesh get /nodes/$VM_NODE/qemu/$VM_ID/status/current); \
-     if [ \"\$VM_STATUS\" = \"running\" ]; then \
-       echo 'A virtuális gép fut.'; \
-       break; \
-     else \
-       echo 'A virtuális gép még nem fut. Várakozás...'; \
-       sleep 10; \
-     fi; \
-   done""
+    vm_command = "..."
     stdin, stdout, stderr = ssh_client.exec_command(vm_command)
     output = stdout.read().decode().strip()
     return output
